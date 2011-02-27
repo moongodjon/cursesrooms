@@ -19,7 +19,8 @@ int nroom,                                        /* what room is to the nrth/st
     wroom,
     uroom,
     droom;
-
+int sw[100];                                         /* an array of switch variables */
+int light=3;                                      /* how far the charecter can see   */
 char* wall;                                       /* what to say when you hit a wall */
 char* helpmsg=
 "Some sort of guidence message should be displayed here.";
@@ -76,10 +77,17 @@ void showmap()                    /* show the map */
    {
       for(wp=0; wp<19; wp++)                            /* || */
       {
-         if(sqrt((wp-x)*(wp-x)+(hp-y)*(hp-y)) <= 3)
-         mvprintw((scrh-19)/2+hp,(scrw-38)/2+wp*2,"%c ",map[z][hp][wp]);   /* print what is at this spot */
+         if(sqrt((wp-x)*(wp-x)+(hp-y)*(hp-y)) <= light)
+            mvprintw((scrh-19)/2+hp,(scrw-38)/2+wp*2,"%c ",map[z][hp][wp]);   /* print what is at this spot */
          if(wp==x && hp==y)                                            /* if the charecter is at this spot... */
-         {mvaddch((scrh-19)/2+hp,(scrw-38)/2+wp*2,'A'| COLOR_PAIR(1));}               /* ...print him */
+           {mvaddch((scrh-19)/2+hp,(scrw-38)/2+wp*2,'A'| COLOR_PAIR(1));               /* ...print him */
+            addch(' ');}
+         if(map[z][hp][wp]=='M')
+           {mvaddch((scrh-19)/2+hp,(scrw-38)/2+wp*2,'o'| COLOR_PAIR(2)|A_BLINK);
+            addch(' ');}
+         if(map[z][hp][wp]=='o')
+           {mvaddch((scrh-19)/2+hp,(scrw-38)/2+wp*2,'o'| A_NORMAL);
+            addch(' ');}
       }
    }
    mvprintw((scrh-1),0,"%i ",x);
@@ -106,7 +114,7 @@ void unmove()
    
    switch(map[z][y][x])
    {  
-      case '-':
+      case '-': /* make it solid and show wall[]  */
       case '|':
       case '+':
          y=py;
@@ -114,15 +122,17 @@ void unmove()
          mvprintw(0,0,"\n\n\n");
          mvprintw(0,0,"%s",wall);
          break;
-      case '^':
+      case '^': /* go up  */
       case 'U':
          z=uroom;clear();
          break;
-      case 'V':
+      case 'V': /* go down */
       case 'D':
          z=droom;clear();
          break;
-      case 'o':
+      case 'o': /* make solid, but no mesage */
+      case 'M':
+      case '#':
          y=py;x=px;
          break;
    }
@@ -138,36 +148,43 @@ void msg(int lx,int ly, char* msg)
 
 }
 
-void smsg(int lx, int ly,int num, ...)
+void smsg(int lx, int ly,char* msg)
 {
    if(lx==x && ly==y)
    {
 
       int scrw,                                         /* how wide the screen is */
           scrh;                                         /* how tall the screen is */
-
+      
       getmaxyx(stdscr,scrh,scrw);                       /* fill the variables scrw & scrh with correct #'s */
-
-      char file[10];
-      sprintf(file, "%s%d", ".", z);
       
-      scr_dump(file);
-      clear();
+      scr_dump(".dump");
       
-      va_list  ap;
-      va_start(ap,num);
-      int pos;
-
-      for(pos=0; pos<num; pos++)
-      {
-         mvprintw((scrh-19)/2+pos,(scrw-38)/2,"%s",va_arg(ap,char*));
-      }
-      va_end(ap);
+      WINDOW *my_win;
+      my_win=newwin(19,37,(scrh-19)/2,(scrw-38)/2);
+     // wborder(my_win,'|','|','-','-','/','\\','/','\\');
+      wprintw(my_win,"%s",msg);
+      wrefresh(my_win);
       getch();
-      scr_restore(file);
+      wclear(my_win);
+      wrefresh(my_win);
+      delwin(my_win);
+      scr_restore(".dump");
+      refresh();
    }
 }
 
-void lvr()
+void lvr(lx,ly,n)
 {
+   int scrw,                                         /* how wide the screen is */
+       scrh;                                         /* how tall the screen is */
+
+   getmaxyx(stdscr,scrh,scrw);   
+
+   if(lx==x && ly==y && sw[n]==0)
+     {sw[n]=1;}
+   if(sw[n])
+      map[z][ly][lx]='M';
+   else
+      map[z][ly][lx]='o';
 }
