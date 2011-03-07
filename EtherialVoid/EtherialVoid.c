@@ -1,5 +1,5 @@
 #include "functions.h"
-
+#include <stdlib.h>
 int main()
 {
    initscr();
@@ -8,6 +8,7 @@ int main()
    start_color();
    init_pair(1, COLOR_GREEN,   COLOR_BLACK);
    init_pair(2, COLOR_MAGENTA, COLOR_BLACK);
+   finit(9,9,0,2);
    clear();
    printw(
    "      Etherial Void   \n\n"
@@ -15,7 +16,7 @@ int main()
    "etherial landscape of the mind?\n\n"
    "The past is uncertian,\n\n"
    "The present is now the past,\n\n"
-   "The future might only be thought of,\n\n"
+   "The future might only be thought of.\n\n"
    "Is then not our mind's eye\n"
    "the root of reality?\n\n"
    "But should that eye be blind,\n"
@@ -35,7 +36,6 @@ int main()
    "there is nothing to see.");
    getch();
    helpmsg="Use the arrow keys or WASD to move the charecter.";
-   
    clear();
    while(loop)
    {  
@@ -46,15 +46,22 @@ int main()
             eroom=2;
             sroom=3;
             wroom=4;
+            uroom=5;
             light=2;
-            msg(9,6,
-            "There <is> something...\n"
-            "dimly glowing etchings on the ground:\n"
-            "'There is naught in this place to the north.'");
             wall=
             "Some sort of wall mesage should be displayed here,\n"
             "It should inform the player of the solidity of this wall,\n"
             "and it should warn that attempts to surpass this fact are admonishable.";
+            
+            msg(9,6,
+            "   I <do> see something:\n"
+            "There seem to be dimly glowing etchings on the ground which signify,\n"
+            "'There is naught to the north.'");
+
+            msg(12,9,
+            "   There is <something> here:\n"
+            "In the ground there are shallow grooves filled with a\n"
+            "faintly luminescent material. I cannot comprehend them.");
             if(sw[0]&&sw[1]&&sw[2]&&sw[3])
             {
                map[0][9][9]='^';
@@ -68,6 +75,8 @@ int main()
             break;
          case 2:
             wroom=0;
+            wall=
+            "There are some large deep grooves on the wall";
             lvr(9,9,1);
             break;
          case 3:
@@ -78,17 +87,23 @@ int main()
             eroom=0;
             lvr(9,9,3);
             break;
+         case 5:
+            eroom=6;
+            droom=1;
+            break;
+         case 6:
+            wroom=5;
+            break;
          default:
             endwin();
-            printf("ERROR THE PROGGRAMMER HAS YET TO MAKE THIS LEVEL!!!\n");
+            printf("Error: 42\n");
             loop=0;
-            return 1;
+            exit(42);
       }
       unmove();
       showmap();
       input();
    }
-
    endwin();
    return 0;
 }
