@@ -2,6 +2,7 @@
 #include <math.h>
 //#include <stdarg.h>
 #include <string.h>
+#include <time.h>
                                                   /*!!!! make sure to compile with -lm -lncurses !!!!*/
 #include "maps.h"
 
@@ -22,6 +23,11 @@ int nroom,                                        /* what room is to the nrth/st
     droom;
 int sw[100];                                         /* an array of switch variables */
 int light;                                      /* how far the charecter can see   */
+int msgtime;                                    /* how long the last mesage stays up */
+//   time_t t;
+
+time_t t;
+   
 char* wall;                                       /* what to say when you hit a wall */
 char* helpmsg=
 "Some sort of guidence message should be displayed here.";
@@ -63,7 +69,7 @@ void input()                                      /* take input from the player 
 {
    py=y;
    px=x;
-   timeout(840);
+   timeout(10);
    inp=getch();                                      /* put player input into variable inp */
    timeout(-1);
    switch(inp)
@@ -89,7 +95,42 @@ void input()                                      /* take input from the player 
    }                           
 
 }
+void uncover()
+{
+   int wp,
+       hp,
+       xp,
+       yp,
+       lp;
+   for(lp=0; lp<=light; lp++)
+     {
+   for(hp=0; hp<19; hp++)                            /* for each spot on the map */
+    {
+   for(wp=0; wp<19; wp++)                            /* || */
+   {
+     if(sqrt((wp-x)*(wp-x)+(hp-y)*(hp-y)) <= lp && mask[z][hp][wp]==0 ) /* if the spot is neer the player and its not already visible */
+     {
+        mask[z][hp][wp]= 2;                         /* it becomes testable... */
 
+//        if(map[z][hp][wp]!='.')
+//        {
+//            for(yp=0; yp<19; yp++)  //                          /* for each spot on the map */
+//             {
+//            for(xp=0; xp<19; xp++)    //                        /* || */
+//            {
+//               if(mask[z][yp][xp]==2)
+//               {
+//                  mask[z][yp][xp]=0;
+//               }
+//            }}
+//        }
+
+        if(mask[z][hp][wp]==2)
+          {mask[z][hp][wp]=1;}                     /* ...then visable */
+     }
+   }}}
+ 
+}
 void showmap()                    /* show the map */
 {
 
@@ -100,39 +141,65 @@ void showmap()                    /* show the map */
    {
       for(wp=0; wp<19; wp++)                            /* || */
       {
-         if(sqrt((wp-x)*(wp-x)+(hp-y)*(hp-y)) <= light) /* if the spot is neer the player */
-         {
-            mask[z][hp][wp]= 1;                         /* it becomes visible */
-         }
          if(mask[z][hp][wp]==1)
          {
             if(map[z][hp][wp]=='M')
             {
-               mvaddch((scrh-19)/2+hp,(scrw-38)/2+wp*2,'o'|A_BLINK|COLOR_PAIR(2));
             }
             else if(map[z][hp][wp]=='o')
             {
                mvaddch((scrh-19)/2+hp,(scrw-38)/2+wp*2,'o'| A_NORMAL);
             }
-            else
+            switch(map[z][hp][wp])
             {
-               mvprintw((scrh-19)/2+hp,(scrw-38)/2+wp*2,"%c ",map[z][hp][wp]);   /* print what is at this spot */
+               case 'M':
+                  mvaddch((scrh-19)/2+hp,(scrw-38)/2+wp*2,'o'|A_BLINK|COLOR_PAIR(2));
+                  break; 
+               case '+':
+               case '-':
+               case '|':
+               case 'X':
+               case 'x':
+                  attron (COLOR_PAIR(3)|A_BOLD);
+                  mvprintw((scrh-19)/2+hp,(scrw-38)/2+wp*2,"%c ",map[z][hp][wp]);   /* print what is at this spot */
+                  attroff(COLOR_PAIR(3)|A_BOLD);
+                  break; 
+               case '^':
+               case 'V':
+                  attron (COLOR_PAIR(4)|A_BOLD);
+                  mvprintw((scrh-19)/2+hp,(scrw-38)/2+wp*2,"%c ",map[z][hp][wp]);   /* print what is at this spot */
+                  attroff(COLOR_PAIR(4)|A_BOLD);
+                  break; 
+               default:
+                  mvprintw((scrh-19)/2+hp,(scrw-38)/2+wp*2,"%c ",map[z][hp][wp]);   /* print what is at this spot */
+                  break; 
             }
+   
          }
          else
          {
-            mvprintw((scrh-19)/2+hp,(scrw-38)/2+wp*2,"@ ");   /* print what is at this spot (nothing) */
+            //attron (A_REVERSE);
+            mvprintw((scrh-19)/2+hp,(scrw-38)/2+wp*2,"  ");   /* print what is at this spot (nothing) */
+            //attroff(A_REVERSE);
          }
          if(wp==x && hp==y)                                            /* if the charecter is at this spot... */
          {
             mvaddch((scrh-19)/2+y,(scrw-38)/2+x*2,'A'| COLOR_PAIR(1));               /* ...print him */
          }
       }
+
    }
    mvprintw((scrh-1),0,"%i ",x);
    mvprintw((scrh-1),3,"%i ",y);
    mvprintw((scrh-1),6,"%i ",z);
-   mvprintw((scrh-1),9,"%i ",light);
+   mvprintw((scrh-1),9,"%i ",msgtime);
+   if(msgtime==0)
+      {mvprintw(0,0,"\n\n\n");}
+   else if(time(NULL)>t)
+      {msgtime--;}
+   t=time(NULL);
+
+   move(scrh-1,scrw-1);
    refresh();                                        /* display all the changes to the screen */
 }
 
@@ -173,6 +240,7 @@ void unmove()
          x=px;
          mvprintw(0,0,"\n\n\n");
          mvprintw(0,0,"%s",wall);
+         msgtime=5;
          break;
       case '^': /* go up  */
       case 'U':
@@ -195,9 +263,10 @@ void msg(int lx,int ly, char* msg)
 {
    if(x==lx && y==ly)
    {
+      msgtime=5;
       mvprintw(0,0,"\n\n\n");
       move(0,0);
-      //mvprintw(0,0,"%c\n\n",msg[0]);
+      
       int i;
       int color=0;
       for(i=0; i<strlen(msg); i++)
@@ -226,12 +295,11 @@ void msg(int lx,int ly, char* msg)
       }
 
    }
-
 }
 
 void smsg(int lx, int ly,char* msg)
 {
-   if(lx==x && ly==y)
+   if(lx==x && ly==y && inp!=ERR)
    {
 
       WINDOW *my_win;

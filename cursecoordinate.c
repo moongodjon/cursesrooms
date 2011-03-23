@@ -1,5 +1,4 @@
 #include "functions.h"
-
 int main()
 {
    initscr();
@@ -8,9 +7,12 @@ int main()
    start_color();
    init_pair(1, COLOR_GREEN,   COLOR_BLACK);
    init_pair(2, COLOR_MAGENTA, COLOR_BLACK);
+   init_pair(3, COLOR_YELLOW,  COLOR_BLACK);
+   init_pair(4, COLOR_BLUE,    COLOR_BLACK);
+
    finit( 9, 9, 0, 3);
    int n; /* having a spare int is useful. */
-   
+//   time_t t;
    printw(
    "   This game is so interesting and meaningfull\n"
    "and the reasons why are explained in this message...\n"
@@ -173,86 +175,28 @@ int main()
                map[5][0][ 9]='-';
                map[5][0][10]='-';
             }
-            switch(sw[1])
+            
+            if(time(NULL)>t)
             {
-               case 2:
-                  sw[1]=0;
-                  sw[2]=1;
-                  break;
-               case 1:
-                  sw[1]=2;
-                  break;
+            int a,b,c,d,e,f,g,h;
+            a=sw[1]; //rotate lvrs
+            b=sw[2];
+            c=sw[3];
+            d=sw[4];
+            e=sw[5];
+            f=sw[6];
+            g=sw[7];
+            h=sw[8];
+            sw[1]=h;
+            sw[2]=a;
+            sw[3]=b;
+            sw[4]=c;
+            sw[5]=d;
+            sw[6]=e;
+            sw[7]=f;
+            sw[8]=g;
             }
-            switch(sw[2])
-            {
-               case 2:
-                  sw[2]=0;
-                  sw[3]=1;
-                  break;
-               case 1:
-                  sw[2]=2;
-                  break;
-            }
-            switch(sw[3])
-            {
-               case 2:
-                  sw[3]=0;
-                  sw[4]=1;
-                  break;
-               case 1:
-                  sw[3]=2;
-                  break;
-            }
-            switch(sw[4])
-            {
-               case 2:
-                  sw[4]=0;
-                  sw[5]=1;
-                  break;
-               case 1:
-                  sw[4]=2;
-                  break;
-            }
-            switch(sw[5])
-            {
-               case 2:
-                  sw[5]=0;
-                  sw[6]=1;
-                  break;
-               case 1:
-                  sw[5]=2;
-                  break;
-            }
-            switch(sw[6])
-            {
-               case 2:
-                  sw[6]=0;
-                  sw[7]=1;
-                  break;
-               case 1:
-                  sw[6]=2;
-                  break;
-            }
-            switch(sw[7])
-            {
-               case 2:
-                  sw[7]=0;
-                  sw[8]=1;
-                  break;
-               case 1:
-                  sw[7]=2;
-                  break;
-            }
-            switch(sw[8])
-            {
-               case 2:
-                  sw[8]=0;
-                  sw[1]=2; // in each other transition the the switch is transitioned from 1 to 2 */
-                  break;   /* immediately after because the next switch statemet follows it, */
-               case 1:     /* switch 8 is not followed by 1 so it must be manualy transitioned to 2 */
-                  sw[8]=2; /* (if that makes any sense) */
-                  break;
-            }
+            t=time(NULL);
             break;
          case 6:
             sroom=5;
@@ -346,6 +290,7 @@ int main()
             {
                if(sw[n]==1)
                {
+                  flip(n+4);
                   flip(n+1);
                   flip(n);
                }
@@ -353,6 +298,7 @@ int main()
             if(sw[20]==1)
             {
                flip(17);
+               flip(24);
                flip(20);
             }
             mlvr( 5, 5,17);
@@ -377,23 +323,33 @@ int main()
                if(sw[n]==1)
                {
                   flip(n-1);
+                  flip(n+4);
+                  flip(n-4);
                   flip(n);
                }
             }
             if(sw[21]==1)
             {
                flip(24);
+               flip(25);
+               flip(17);
                flip(21);
             }
             if(sw[30]==1)
             {
-               flip(21);
-               flip(22);
-               flip(23);
-               flip(24);
+               int a,b,c,d;
+               a=sw[21];
+               b=sw[22];
+               c=sw[23];
+               d=sw[24];
+               sw[21]=b;
+               sw[22]=c;
+               sw[23]=d;
+               sw[24]=a;
                flip(30);
             }
 
+            mlvr( 9, 9,30);
             mlvr( 5, 5,21);
             mlvr(13, 5,22);
             mlvr(13,13,23);
@@ -401,7 +357,7 @@ int main()
             break;
          case 9:
             droom=8;
-
+            uroom=10;
             lvr( 9, 9,29);
 
             lvr( 5, 5,25);
@@ -414,20 +370,27 @@ int main()
                if(sw[n]==1)
                {
                   flip(n+1);
+                  flip(n-4);
                   flip(n);
                }
             }
             if(sw[28]==1)
             {
                flip(25);
+               flip(24);
                flip(28);
             }
             if(sw[29]==1)
             {
-               flip(25);
-               flip(26);
-               flip(27);
-               flip(28);
+               int a,b,c,d;
+               a=sw[25];
+               b=sw[26];
+               c=sw[27];
+               d=sw[28];
+               sw[25]=d;
+               sw[26]=a;
+               sw[27]=b;
+               sw[28]=c;
                flip(29);
             }
             mlvr( 5, 5,25);
@@ -443,6 +406,7 @@ int main()
             return 1;
       }
       unmove();
+      uncover();
       showmap();
       input();
    }
