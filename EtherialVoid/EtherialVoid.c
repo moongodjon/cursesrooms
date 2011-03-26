@@ -101,6 +101,7 @@ int main()
             exit(42);
       }
       unmove();
+      uncover(0);
       showmap();
       input();
    }

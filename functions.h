@@ -95,40 +95,74 @@ void input()                                      /* take input from the player 
    }                           
 
 }
-void uncover()
+void uncover(int shadow)
 {
    int wp,
        hp,
        xp,
        yp,
-       lp;
-   for(lp=0; lp<=light; lp++)
-     {
-   for(hp=0; hp<19; hp++)                            /* for each spot on the map */
-    {
-   for(wp=0; wp<19; wp++)                            /* || */
+       pp, // point placement
+       mp, // maximum pp value // (that's what she said)
+       lp; // light placement
+
+   struct point
+   {  int x;
+      int y;
+   } plist[100];
+
+   pp=0;
+   if(shadow==1)
    {
-     if(sqrt((wp-x)*(wp-x)+(hp-y)*(hp-y)) <= lp && mask[z][hp][wp]==0 ) /* if the spot is neer the player and its not already visible */
+      for(hp=0; hp<19; hp++)                            /* first pass gets blocking points... */
+       {
+      for(wp=0; wp<19; wp++)                            /* || */
+      {
+        if(sqrt((wp-x)*(wp-x)+(hp-y)*(hp-y)) <= light ) /* if the spot is neer the player and its not already visible */
+        {
+           if(map[z][hp][wp]!='.')
+           {
+              plist[pp].x=wp;
+              plist[pp].y=hp;
+              pp++;
+           }
+         //  mask[z][hp][wp]= 1;                         /* it does not yet become visable*/
+        }
+      }}
+   }
+   mp=pp;
+   int inspection;                                 /* inspection =1 if passed 0 if failed */
+   for(hp=0; hp<19; hp++)                            /*...second pass tests if points are within their shadow. */
      {
-        mask[z][hp][wp]= 2;                         /* it becomes testable... */
-
-//        if(map[z][hp][wp]!='.')
-//        {
-//            for(yp=0; yp<19; yp++)  //                          /* for each spot on the map */
-//             {
-//            for(xp=0; xp<19; xp++)    //                        /* || */
-//            {
-//               if(mask[z][yp][xp]==2)
-//               {
-//                  mask[z][yp][xp]=0;
-//               }
-//            }}
-//        }
-
-        if(mask[z][hp][wp]==2)
-          {mask[z][hp][wp]=1;}                     /* ...then visable */
-     }
-   }}}
+   for(wp=0; wp<19; wp++)                            /* || */
+    {
+   inspection=1;       /* next inspection is innocent until proven guilty */
+   for(pp=0; pp<mp; pp++)
+   {
+      if(
+       plist[pp].x>x
+     &&wp>plist[pp].x
+       ||
+       plist[pp].y>y
+     &&hp>plist[pp].y
+       ||
+       plist[pp].x<x
+     &&wp<plist[pp].x
+       ||
+       plist[pp].y<y
+     &&hp<plist[pp].y
+        )
+      {
+         inspection=0;
+      }
+   }
+   if(sqrt((wp-x)*(wp-x)+(hp-y)*(hp-y)) > light ) /* if the spot is far from the player  */
+   {
+      inspection=0;
+   }
+   if(inspection==1)
+   {  mask[z][hp][wp]=1;
+   }
+   }}
  
 }
 void showmap()                    /* show the map */

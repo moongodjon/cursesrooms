@@ -10,7 +10,7 @@ int main()
    init_pair(3, COLOR_YELLOW,  COLOR_BLACK);
    init_pair(4, COLOR_BLUE,    COLOR_BLACK);
 
-   finit( 9, 9, 0, 3);
+   finit( 9, 9, 0, 4);
    int n; /* having a spare int is useful. */
 //   time_t t;
    printw(
@@ -406,7 +406,7 @@ int main()
             return 1;
       }
       unmove();
-      uncover();
+      uncover(1);
       showmap();
       input();
    }
