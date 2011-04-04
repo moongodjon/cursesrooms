@@ -10,7 +10,7 @@ int main()
    init_pair(3, COLOR_YELLOW,  COLOR_BLACK);
    init_pair(4, COLOR_BLUE,    COLOR_BLACK);
 
-   finit( 9, 9, 0, 4);
+   finit( 9, 9, 0, 3);
    int n; /* having a spare int is useful. */
 //   time_t t;
    printw(
@@ -32,7 +32,7 @@ int main()
          case 0:
             uroom=5;
             wroom=1;
-           
+ 
             wall=
             "Some sort of wall mesage should be displayed here,\n"
             "It should inform the player of the solidity of this wall,\n"

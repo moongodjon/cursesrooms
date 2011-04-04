@@ -102,83 +102,60 @@ void uncover(int shadow)
        xp,
        yp,
        pp, // point placement
-       mp, // maximum pp value // (that's what she said)
+//     mp, // maximum pp value // (that's what she said)
+       pt, // photon test
        lp; // light placement
 
-   struct point
-   {  int x;
-      int y;
-   } plist[100];
+   #define PHOTON_NUM 32
+   struct photon
+   {   int x;
+       int y;
+       float xd; /* direction */
+       float yd;
+   } ray[PHOTON_NUM];
 
-   pp=0;
-   if(shadow==1)
-   {
-      for(hp=0; hp<19; hp++)                            /* first pass gets blocking points... */
-       {
-      for(wp=0; wp<19; wp++)                            /* || */
-      {
-        if(sqrt((wp-x)*(wp-x)+(hp-y)*(hp-y)) <= light ) /* if the spot is neer the player and its not already visible */
-        {
-           if(map[z][hp][wp]!='.')
-           {
-              plist[pp].x=wp;
-              plist[pp].y=hp;
-              pp++;
-           }
-         //  mask[z][hp][wp]= 1;                         /* it does not yet become visable*/
-        }
-      }}
-   }
-   mp=pp;
-   int inspection;                                 /* inspection =1 if passed 0 if failed */
-   for(hp=0; hp<19; hp++)                            /*...second pass tests if points are within their shadow. */
-     {
-   for(wp=0; wp<19; wp++)                            /* || */
-    {
-   inspection=1;       /* next inspection is innocent until proven guilty */
-   for(pp=0; pp<mp; pp++)
-   {
-      double const dxs2p=(double)(x-wp); //diff x source 2 point 
-      double const dys2p=(double)(y-hp);
-      double const ds2p=sqrt(dxs2p*dxs2p+dys2p*dys2p);
-
-      double dxo2p=(double)(plist[pp].x-wp); //diff x object2point
-      double dyo2p=(double)(plist[pp].y-hp);
-      double do2p=sqrt(dxo2p*dxo2p+dyo2p*dyo2p);
+   for(pp=0;pp<PHOTON_NUM;pp++) /* ready the photon torpedoes */
+   {  ray[pp].x =x;
+      ray[pp].y =y;
       
-
-      if (x == wp && y == hp)
-        continue;
-      if (plist[pp].x== x && plist[pp].y ==y)
-        continue;
-
-      if(do2p>ds2p+0.5||do2p<0.5)
-         continue; /* pass inspecion */
-      double px=dxo2p*ds2p/do2p;
-      double py=dyo2p*ds2p/do2p;
-      double pr=0.5*(ds2p/do2p);
-      if(px<dxs2p-pr
-         ||
-         px>dxs2p+pr
-         ||
-         py<dys2p-pr
-         ||
-         py>dys2p+pr
-        )
-        continue;
-        
-         inspection=0;
-
+      if      (pp<=PHOTON_NUM/4)
+      {  ray[pp].xd=pp/(PHOTON_NUM/4);
+         ray[pp].yd=1-ray[pp].xd;
+      }
+      else if (pp<=PHOTON_NUM/2)
+      {  ray[pp].xd=(pp-PHOTON_NUM/4)/(PHOTON_NUM/4);
+         ray[pp].yd=1-ray[pp].xd;
+         ray[pp].yd*=-1;
+      }
+      else if (pp<=(PHOTON_NUM/4)*3)
+      {  ray[pp].xd=(pp-PHOTON_NUM/2)/(PHOTON_NUM/4);
+         ray[pp].yd=1-ray[pp].xd;
+         ray[pp].yd*=-1;
+         ray[pp].xd*=-1;
+      }
+      else if (pp<=PHOTON_NUM)
+      {  ray[pp].xd=(pp-(PHOTON_NUM/4)*3)/(PHOTON_NUM/4);
+         ray[pp].yd=1-ray[pp].xd;
+         ray[pp].xd*=-1;
+      }
+      else
+      {  printw("PHOTON_NUM EXCEEDED!");
+      }
+      while(pt==0) /* fireing torpedoes */
+      {  switch(map[z][ray[pp].y][ray[pp].x])
+          {  case '.':
+                printw("testing .");
+                mask[z][ray[pp].y][ray[pp].x]=1;
+                ray[pp].y*=ray[pp].yd;
+                ray[pp].x*=ray[pp].xd;
+             default :
+                printw("LOLOL");
+                pt=1;
+          } 
+           
+      }
    }
-   if(sqrt((wp-x)*(wp-x)+(hp-y)*(hp-y)) > light ) /* if the spot is far from the player  */
-   {
-      inspection=0;
-   }
-   if(inspection==1)
-   {  mask[z][hp][wp]=1;
-   }
-   }}
- 
+
 }
 void showmap()                    /* show the map */
 {

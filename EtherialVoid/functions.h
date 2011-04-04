@@ -138,22 +138,37 @@ void uncover(int shadow)
    inspection=1;       /* next inspection is innocent until proven guilty */
    for(pp=0; pp<mp; pp++)
    {
-      if(
-       plist[pp].x>x
-     &&wp>plist[pp].x
-       ||
-       plist[pp].y>y
-     &&hp>plist[pp].y
-       ||
-       plist[pp].x<x
-     &&wp<plist[pp].x
-       ||
-       plist[pp].y<y
-     &&hp<plist[pp].y
+      double const dxs2p=(double)(x-wp); //diff x source 2 point 
+      double const dys2p=(double)(y-hp);
+      double const ds2p=sqrt(dxs2p*dxs2p+dys2p*dys2p);
+
+      double dxo2p=(double)(plist[pp].x-wp); //diff x object2point
+      double dyo2p=(double)(plist[pp].y-hp);
+      double do2p=sqrt(dxo2p*dxo2p+dyo2p*dyo2p);
+      
+
+      if (x == wp && y == hp)
+        continue;
+      if (plist[pp].x== x && plist[pp].y ==y)
+        continue;
+
+      if(do2p>ds2p+0.5||do2p<0.5)
+         continue; /* pass inspecion */
+      double px=dxo2p*ds2p/do2p;
+      double py=dyo2p*ds2p/do2p;
+      double pr=0.5*(ds2p/do2p);
+      if(px<dxs2p-pr
+         ||
+         px>dxs2p+pr
+         ||
+         py<dys2p-pr
+         ||
+         py>dys2p+pr
         )
-      {
+        continue;
+        
          inspection=0;
-      }
+
    }
    if(sqrt((wp-x)*(wp-x)+(hp-y)*(hp-y)) > light ) /* if the spot is far from the player  */
    {
