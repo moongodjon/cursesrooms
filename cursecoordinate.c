@@ -12,7 +12,7 @@ int main()
 
    finit( 9, 9, 0, 3);
    int n; /* having a spare int is useful. */
-//   time_t t;
+   time_t t;
    printw(
    "   This game is so interesting and meaningfull\n"
    "and the reasons why are explained in this message...\n"
@@ -22,7 +22,6 @@ int main()
    getch();
    getch();
    getch();
-   //helpmsg="..."
    clear();
 
    while(loop)
@@ -37,7 +36,11 @@ int main()
             "Some sort of wall mesage should be displayed here,\n"
             "It should inform the player of the solidity of this wall,\n"
             "and it should warn that attempts to surpass this fact are admonishable.";
-           
+
+            event(11,11,30,"hello");
+            event(11,11,31,"hello again");
+            event(11,11,32,"hello a third time");
+ 
             msg(8,9,
             "THIS SPOT IS IMPORTANT FOR THIS REASON");
             smsg(2,9,
@@ -405,7 +408,7 @@ int main()
             loop=0;
             return 1;
       }
-      unmove();
+      BlockMessage();
       uncover(1);
       showmap();
       input();

@@ -23,10 +23,6 @@ int nroom,                                        /* what room is to the nrth/st
     droom;
 int sw[100];                                         /* an array of switch variables */
 int light;                                      /* how far the charecter can see   */
-int msgtime;                                    /* how long the last mesage stays up */
-//   time_t t;
-
-time_t t;
    
 char* wall;                                       /* what to say when you hit a wall */
 char* helpmsg=
@@ -41,7 +37,15 @@ int inp;                                          /* player input */
 void finit(int nx,int ny,int nz,int nlight)
 { 
    getmaxyx(stdscr,scrh,scrw);                       /* fill the variables scrw & scrh with correct #'s */
-
+   if(scrh<25)
+   {  printw("the terminal height is %i,\n"\
+             "it should be >25:\n"\
+             "Minor Graphical Errors will occur.",scrh);
+      refresh();
+      getch();
+      clear();
+   }
+//   if(scrw<20);
    int a,b,c;
 
    for(a=0;a>=100;a++)
@@ -88,12 +92,7 @@ void input()                                      /* take input from the player 
       x++;     break;                                /* 'd' or 'l': x is 1 more (right)*/
       case 'Q':
       loop--;  break;                                /* 'Q': loop is 1 less (0) and the game ends :( */
-      case 'h':
-      case '/':
-      case '?':
-      help();  break;                                /* 'H' '/' or '?': display help */
    }                           
-
 }
 void uncover(int shadow)
 {
@@ -241,21 +240,17 @@ void showmap()                    /* show the map */
    mvprintw((scrh-1),0,"%i ",x);
    mvprintw((scrh-1),3,"%i ",y);
    mvprintw((scrh-1),6,"%i ",z);
-   mvprintw((scrh-1),9,"%i ",msgtime);
-   if(msgtime==0)
-      {mvprintw(0,0,"\n\n\n");}
-   else if(time(NULL)>t)
-      {msgtime--;}
-   t=time(NULL);
-
    move(scrh-1,scrw-1);
    refresh();                                        /* display all the changes to the screen */
 }
 
 
-void unmove()
+void BlockMessage()
 {
-   char file[10];
+   if(inp=='h'||inp=='/'||inp=='?')
+      help();                                /* 'H' '/' or '?': display help */
+   else if(inp!=ERR)
+     {mvprintw(0,0,"\n\n\n");}
    if(x>=19||x<=-1||y>=19||y<=-1)
    {
      if(x>=19)                                                          /* go from 1 room to another */
@@ -289,7 +284,6 @@ void unmove()
          x=px;
          mvprintw(0,0,"\n\n\n");
          mvprintw(0,0,"%s",wall);
-         msgtime=5;
          break;
       case '^': /* go up  */
       case 'U':
@@ -312,7 +306,6 @@ void msg(int lx,int ly, char* msg)
 {
    if(x==lx && y==ly)
    {
-      msgtime=5;
       mvprintw(0,0,"\n\n\n");
       move(0,0);
       
@@ -361,7 +354,13 @@ void smsg(int lx, int ly,char* msg)
       refresh();
    }
 }
-
+void event(int lx,int ly,int n,char* msg)
+{  
+   if(lx==x && ly==y && sw[n]==0 )
+   { smsg(lx,ly,msg);
+     sw[n]=1;
+   }
+}
 void lvr(lx,ly,n)
 {
    if(lx==x && ly==y && sw[n]==0)
