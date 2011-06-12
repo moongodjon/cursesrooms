@@ -16,7 +16,6 @@ int main()
       {  case 2 :
             if(lever[2][0].on)
             {  map[2][12][9]='.';
-               map[2][13][9]='.';
                map[2][14][9]='.';
             }break;
          case 3 :
@@ -76,13 +75,21 @@ int main()
             {  map[4][ crate[4][0].y ][ crate[4][0].x ]='.';
                crate[4][0].x=9;
                crate[4][0].y=9;
-               
                lever[4][0].on=0;
+            }
+            if(button[4][0].on)
+            {  map[4][9][3]='.';
+               map[4][9][1]='.';
+            }
+            else
+            {  map[4][9][3]='|';
+               map[4][9][1]='|';
             }
       }  
       levers();
       mesages();
       boxes();
+      buttons();
       items();
       BlockMessage();
       uncover(1);

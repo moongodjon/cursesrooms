@@ -31,7 +31,7 @@ struct s
          y;
    int   on;
    char* hit;
-}lever[FLOORS][10];
+} *lever[FLOORS];
 
 struct it
 {  int   x,
@@ -55,9 +55,17 @@ struct m
    char *hit;
 }mesage[FLOORS][10];
 
+struct bt
+{  int   x,
+         y,
+        on;
+   char ch;
+}button[FLOORS][10];     
+
 char *bag [3]={"Empty",
                "Empty",
                "Empty"};  /*all items in your 'bag' */
+
 
 int light;                                      /* how far the charecter can see   */
    
@@ -71,7 +79,7 @@ int mask[FLOORS][19][19];                            /* what parts of the map ar
 
 int inp;                                          /* player input */
 
-#include "objects.h"
+//#include "objects.h"
 
 void finit(int nx,int ny,int nz,int nlight)
 {  initscr();
@@ -82,6 +90,7 @@ void finit(int nx,int ny,int nz,int nlight)
    init_pair(2, COLOR_MAGENTA, COLOR_BLACK);
    init_pair(3, COLOR_YELLOW,  COLOR_BLACK);
    init_pair(4, COLOR_BLUE,    COLOR_BLACK);
+   init_pair(5, COLOR_RED,     COLOR_BLACK);
  
    getmaxyx(stdscr,scrh,scrw);                       /* fill the variables scrw & scrh with correct #'s */
    if(scrh<25)
@@ -258,6 +267,11 @@ void showmap()                    /* show the map */
                   mvprintw((scrh-19)/2+hp,(scrw-38)/2+wp*2,"%c ",map[z][hp][wp]);   /* print what is at this spot */
                   attroff(COLOR_PAIR(4)|A_BOLD);
                   break; 
+               case '@':
+                  attron (COLOR_PAIR(5)|A_BOLD);
+                  mvprintw((scrh-19)/2+hp,(scrw-38)/2+wp*2,"%c ",map[z][hp][wp]);   /* print what is at this spot */
+                  attroff(COLOR_PAIR(5)|A_BOLD);
+                  break; 
                default:
                   mvprintw((scrh-19)/2+hp,(scrw-38)/2+wp*2,"%c ",map[z][hp][wp]);   /* print what is at this spot */
                   break; 
@@ -415,7 +429,7 @@ void event(int lx,int ly,int n,char* msg)
 }
 void levers()
 {  int n;
-   for(n=0;n<=9;n++)
+   for(n=0;lever[z][n].x>=0;n++)
    {  if(lever[z][n].on)
          map[z][ lever[z][n].y ][ lever[z][n].x ]='M';
       else
@@ -423,7 +437,7 @@ void levers()
       if(x==lever[z][n].x&&y==lever[z][n].y&&lever[z][n].on==0)           // show msg && on=1 if player ay that spot.
       {  lever[z][n].on=1;
          if(lever[z][n].hit!=NULL)
-            event(lever[z][n].x,lever[z][n].y,10*z+n,lever[z][n].hit);
+            smsg(lever[z][n].x,lever[z][n].y,lever[z][n].hit);
       }   
    }
 }
@@ -431,19 +445,19 @@ void boxes()
 {  int n;
    for(n=0;n<=9;n++)
    {  if(x==crate[z][n].x&&y==crate[z][n].y)
-      {       if(px<x&&map[z][y][x+1]=='.'&&x+1<19)
+      {       if(px<x&&(map[z][y][x+1]=='.'||map[z][y][x+1]=='*')&&x+1<18)
          {  crate[z][n].x++;
             map[z][y][x]='.';
          }
-         else if(px>x&&map[z][y][x-1]=='.'&&x-1>=0)
+         else if(px>x&&(map[z][y][x-1]=='.'||map[z][y][x-1]=='*')&&x-1>=1)
          {  crate[z][n].x--;
             map[z][y][x]='.';
          }
-         else if(py<y&&map[z][y+1][x]=='.'&&y+1<19)
+         else if(py<y&&(map[z][y+1][x]=='.'||map[z][y+1][x]=='*')&&y+1<18)
          {  crate[z][n].y++;
             map[z][y][x]='.';
          }
-         else if(py>y&&map[z][y-1][x]=='.'&&y-1>=0)
+         else if(py>y&&(map[z][y-1][x]=='.'||map[z][y-1][x]=='*')&&y-1>=1)
          {  crate[z][n].y--;
             map[z][y][x]='.';
          }
@@ -454,6 +468,23 @@ void boxes()
          }
       }
    map[z][ crate[z][n].y ][ crate[z][n].x ]=crate[z][n].ch;
+   }
+}
+void buttons()
+{  int m;
+   int n;
+   for(n=0;n<=9;n++)
+   {  map[z][ button[z][n].y ][ button[z][n].x ]=button[z][n].ch;
+      button[z][n].on=0;
+      for(m=0;m<=9;m++)
+      {  if(x==button[z][n].x&&y==button[z][n].y)
+         {  button[z][n].on=1;
+         }
+         if(crate[z][m].x==button[z][n].x&&crate[z][m].y==button[z][n].y)
+         {  button[z][n].on=1;
+            map[z][ crate[z][m].y ][ crate[z][m].x ]=crate[z][m].ch;
+         }
+      }
    }
 }
 void items()

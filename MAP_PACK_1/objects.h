@@ -68,13 +68,21 @@ lever[4][0].x=15;
 lever[4][0].y=7;
 lever[4][0].hit=
 "Did something just move?";
+lever[4][1].x=15;
+lever[4][1].y=11;
 
-item[4][0].x=11;
-item[4][0].y=11;
-item[4][0].ch='I';
-item[4][0].name="Fredrick";
-item[4][0].hit=
-"you hame obtained :\nFredrick";
+
+button[4][0].x=15;
+button[4][0].y=9;
+button[4][0].ch=' ';
+button[4][0].on=0;
+
+//item[4][0].x=11;
+//item[4][0].y=11;
+//item[4][0].ch='I';
+//item[4][0].name="Fredrick";
+//item[4][0].hit=
+//"you hame obtained :\nFredrick";
 
 }
 
