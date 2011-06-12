@@ -5,6 +5,8 @@
 #include <time.h>
                                                   /*!!!! make sure to compile with -lm -lncurses !!!!*/
 #include "maps.h"
+#define FLOORS 100
+#define SWITCHES 100
 
 int loop=1;                                       /* the game continues as long as this is 1 */
 
@@ -15,13 +17,56 @@ int x,                                          /* where the player is */
 int py=0,                                         /* where the player was */
     px=0;
 
-int nroom,                                        /* what room is to the nrth/sth/e/w/abve/belw */
-    sroom,
-    eroom,
-    wroom,
-    uroom,
-    droom;
-int sw[100];                                         /* an array of switch variables */
+int nroom[FLOORS],                                       /* what room is to the nrth/sth/e/w/abve/belw */
+    sroom[FLOORS],
+    eroom[FLOORS],
+    wroom[FLOORS],
+    uroom[FLOORS],
+    droom[FLOORS];
+
+int sw[SWITCHES];                                         /* an array of switch variables */
+
+struct s
+{  int   x,
+         y;
+   int   on;
+   char* hit;
+} *lever[FLOORS];
+
+struct it
+{  int   x,
+         y;
+   char  ch;
+   char* name;
+   char* hit;
+}item[FLOORS][10]; /*100 floors 10 items/floor*/
+
+struct bx
+{  int    x,
+          y;
+   char  ch;
+   char* hit;
+}crate[FLOORS][10]; /*100 floors 10 boxes/floor*/
+
+struct m
+{  int   x,
+         y;
+   char  ch;
+   char *hit;
+}mesage[FLOORS][10];
+
+struct bt
+{  int   x,
+         y,
+        on;
+   char ch;
+}button[FLOORS][10];     
+
+char *bag [3]={"Empty",
+               "Empty",
+               "Empty"};  /*all items in your 'bag' */
+
+
 int light;                                      /* how far the charecter can see   */
    
 char* wall;                                       /* what to say when you hit a wall */
@@ -30,12 +75,23 @@ char* helpmsg=
 
 int scrw,                                         /* how wide the screen is */
     scrh;                                         /* how tall the screen is */
-int mask[100][19][19];                            /* what parts of the map are visible */
+int mask[FLOORS][19][19];                            /* what parts of the map are visible */
 
 int inp;                                          /* player input */
 
+//#include "objects.h"
+
 void finit(int nx,int ny,int nz,int nlight)
-{ 
+{  initscr();
+   keypad(stdscr, TRUE);
+   noecho();
+   start_color();
+   init_pair(1, COLOR_GREEN,   COLOR_BLACK);
+   init_pair(2, COLOR_MAGENTA, COLOR_BLACK);
+   init_pair(3, COLOR_YELLOW,  COLOR_BLACK);
+   init_pair(4, COLOR_BLUE,    COLOR_BLACK);
+   init_pair(5, COLOR_RED,     COLOR_BLACK);
+ 
    getmaxyx(stdscr,scrh,scrw);                       /* fill the variables scrw & scrh with correct #'s */
    if(scrh<25)
    {  printw("the terminal height is %i,\n"\
@@ -48,26 +104,21 @@ void finit(int nx,int ny,int nz,int nlight)
 //   if(scrw<20);
    int a,b,c;
 
-   for(a=0;a>=100;a++)
-      {
+   for(a=0;a>=FLOORS;a++)
    for(b=0;b>=19 ;b++)
-    {
    for(c=0;c>=19 ;c++)
-   {
-       sw[a]      =0;
+   {   sw[a]      =0;
      mask[a][b][c]=0;
-   }}}
+   }
    
    z=nz;
    y=ny;
    x=nx;
    light=nlight;
 }
-void help()                                       /* tell the user how to play the game */
-{
-   mvprintw(0,0,"\n\n\n");
-   mvprintw(0,0,"%s",helpmsg);
-}
+
+void help();                                       /* tell the user how to play the game */
+void menu();
 
 void input()                                      /* take input from the player and do his bidding */
 {
@@ -80,18 +131,24 @@ void input()                                      /* take input from the player 
    {
       case 'w':
       case KEY_UP:
-      y--;     break;                                /* if the input is 'w' or 'k' y is 1 less (you go up) */
+         y--;     break;                                /* if the input is 'w' or 'k' y is 1 less (you go up) */
       case 'a':
       case KEY_LEFT:
-      x--;     break;                                /* 'a' or 'h': x is 1 less (left) */
+         x--;     break;                                /* 'a' or 'h': x is 1 less (left) */
       case 's':
       case KEY_DOWN:
-      y++;     break;                                /* 's' or 'j': y is 1 more (down) */
+         y++;     break;                                /* 's' or 'j': y is 1 more (down) */
       case 'd':
       case KEY_RIGHT:
-      x++;     break;                                /* 'd' or 'l': x is 1 more (right)*/
+         x++;     break;                                /* 'd' or 'l': x is 1 more (right)*/
       case 'Q':
-      loop--;  break;                                /* 'Q': loop is 1 less (0) and the game ends :( */
+         loop--;  break;                                /* 'Q': loop is 1 less (0) and the game ends :( */
+      case 'h':
+      case '/':
+      case '?':
+         help();  break;
+      case 'm':
+         menu();  break;
    }                           
 }
 void uncover(int shadow)
@@ -113,20 +170,19 @@ void uncover(int shadow)
    if(shadow==1)
    {
       for(hp=0; hp<19; hp++)                            /* first pass gets blocking points... */
-       {
       for(wp=0; wp<19; wp++)                            /* || */
       {
         if(sqrt((wp-x)*(wp-x)+(hp-y)*(hp-y)) <= light ) /* if the spot is neer the player and its not already visible */
         {
-           if(map[z][hp][wp]!='.')
+           if(map[z][hp][wp]!='.'&&
+              map[z][hp][wp]!='*')
            {
               plist[pp].x=wp;
               plist[pp].y=hp;
               pp++;
            }
-         //  mask[z][hp][wp]= 1;                         /* it does not yet become visable*/
         }
-      }}
+      }
    }
    mp=pp;
    int inspection;                                 /* inspection =1 if passed 0 if failed */
@@ -191,13 +247,6 @@ void showmap()                    /* show the map */
       {
          if(mask[z][hp][wp]==1)
          {
-            if(map[z][hp][wp]=='M')
-            {
-            }
-            else if(map[z][hp][wp]=='o')
-            {
-               mvaddch((scrh-19)/2+hp,(scrw-38)/2+wp*2,'o'| A_NORMAL);
-            }
             switch(map[z][hp][wp])
             {
                case 'M':
@@ -217,6 +266,11 @@ void showmap()                    /* show the map */
                   attron (COLOR_PAIR(4)|A_BOLD);
                   mvprintw((scrh-19)/2+hp,(scrw-38)/2+wp*2,"%c ",map[z][hp][wp]);   /* print what is at this spot */
                   attroff(COLOR_PAIR(4)|A_BOLD);
+                  break; 
+               case '@':
+                  attron (COLOR_PAIR(5)|A_BOLD);
+                  mvprintw((scrh-19)/2+hp,(scrw-38)/2+wp*2,"%c ",map[z][hp][wp]);   /* print what is at this spot */
+                  attroff(COLOR_PAIR(5)|A_BOLD);
                   break; 
                default:
                   mvprintw((scrh-19)/2+hp,(scrw-38)/2+wp*2,"%c ",map[z][hp][wp]);   /* print what is at this spot */
@@ -247,31 +301,29 @@ void showmap()                    /* show the map */
 
 void BlockMessage()
 {
-   if(inp=='h'||inp=='/'||inp=='?')
-      help();                                /* 'H' '/' or '?': display help */
-   else if(inp!=ERR)
+   if(inp!=ERR)
      {mvprintw(0,0,"\n\n\n");}
    if(x>=19||x<=-1||y>=19||y<=-1)
    {
      if(x>=19)                                                          /* go from 1 room to another */
      {
         x=0;
-        z=eroom;
+        z=eroom[z];
      }
      if(x<=-1)
      {
         x=18;
-        z=wroom;
+        z=wroom[z];
      }
      if(y>=19)
      {
         y=0;
-        z=sroom;
+        z=sroom[z];
      }
      if(y<=-1)
      {
         y=18;
-        z=nroom;
+        z=nroom[z];
      }   
    }
    switch(map[z][y][x])
@@ -288,12 +340,12 @@ void BlockMessage()
       case '^': /* go up  */
       case 'U':
          if(inp!=ERR) /*the player has to WANT to go up*/
-            z=uroom;
+            z=uroom[z];
          break;
       case 'V': /* go down */
       case 'D':
          if(inp!=ERR)
-            z=droom;
+            z=droom[z];
          break;
       case 'o': /* make solid, but no mesage */
       case 'M':
@@ -339,19 +391,33 @@ void msg(int lx,int ly, char* msg)
    }
 }
 
-void smsg(int lx, int ly,char* msg)
+char smsg(int lx, int ly,char* msg)
 {
    if(lx==x && ly==y && inp!=ERR)
-   {
-
-      WINDOW *my_win;
+   {  WINDOW *my_win;
       my_win=newwin(19,37,(scrh-19)/2,(scrw-38)/2);
      // wborder(my_win,'|','|','-','-','/','\\','/','\\');
       wprintw(my_win,"%s",msg);
       wrefresh(my_win);
-      getch();
+      char r=getch();
       showmap();
       refresh();
+      return r;
+   }
+}
+void mesages()
+{  int n;
+   for(n=0;n<=9;n++)
+   {  if(mesage[z][n].hit!=NULL)
+         map[z][ mesage[z][n].y ][ mesage[z][n].x ]=mesage[z][n].ch; // set map = to msg char.
+      if(x==mesage[z][n].x&&y==mesage[z][n].y&&inp!=ERR)           // show msg if player ay that spot.
+      {  WINDOW *my_win;
+         my_win=newwin(19,37,(scrh-19)/2,(scrw-38)/2);
+         wprintw(my_win,"%s",mesage[z][n].hit);
+         wrefresh(my_win);
+         getch();
+         refresh();
+      }
    }
 }
 void event(int lx,int ly,int n,char* msg)
@@ -360,6 +426,127 @@ void event(int lx,int ly,int n,char* msg)
    { smsg(lx,ly,msg);
      sw[n]=1;
    }
+}
+void levers()
+{  int n;
+   for(n=0;lever[z][n].x>=0;n++)
+   {  if(lever[z][n].on)
+         map[z][ lever[z][n].y ][ lever[z][n].x ]='M';
+      else
+         map[z][ lever[z][n].y ][ lever[z][n].x ]='o'; // set map = to msg char.
+      if(x==lever[z][n].x&&y==lever[z][n].y&&lever[z][n].on==0)           // show msg && on=1 if player ay that spot.
+      {  lever[z][n].on=1;
+         if(lever[z][n].hit!=NULL)
+            smsg(lever[z][n].x,lever[z][n].y,lever[z][n].hit);
+      }   
+   }
+}
+void boxes()
+{  int n;
+   for(n=0;n<=9;n++)
+   {  if(x==crate[z][n].x&&y==crate[z][n].y)
+      {       if(px<x&&(map[z][y][x+1]=='.'||map[z][y][x+1]=='*')&&x+1<18)
+         {  crate[z][n].x++;
+            map[z][y][x]='.';
+         }
+         else if(px>x&&(map[z][y][x-1]=='.'||map[z][y][x-1]=='*')&&x-1>=1)
+         {  crate[z][n].x--;
+            map[z][y][x]='.';
+         }
+         else if(py<y&&(map[z][y+1][x]=='.'||map[z][y+1][x]=='*')&&y+1<18)
+         {  crate[z][n].y++;
+            map[z][y][x]='.';
+         }
+         else if(py>y&&(map[z][y-1][x]=='.'||map[z][y-1][x]=='*')&&y-1>=1)
+         {  crate[z][n].y--;
+            map[z][y][x]='.';
+         }
+         else
+         {  x=px;
+            y=py;
+            smsg(x,y,"you can't push this block");
+         }
+      }
+   map[z][ crate[z][n].y ][ crate[z][n].x ]=crate[z][n].ch;
+   }
+}
+void buttons()
+{  int m;
+   int n;
+   for(n=0;n<=9;n++)
+   {  map[z][ button[z][n].y ][ button[z][n].x ]=button[z][n].ch;
+      button[z][n].on=0;
+      for(m=0;m<=9;m++)
+      {  if(x==button[z][n].x&&y==button[z][n].y)
+         {  button[z][n].on=1;
+         }
+         if(crate[z][m].x==button[z][n].x&&crate[z][m].y==button[z][n].y)
+         {  button[z][n].on=1;
+            map[z][ crate[z][m].y ][ crate[z][m].x ]=crate[z][m].ch;
+         }
+      }
+   }
+}
+void items()
+{  int n;
+   for(n=0;n<=9;n++)
+   {  map[z][ item[z][n].y ][ item[z][n].x ]=item[z][n].ch;
+      if(x==item[z][n].x&&y==item[z][n].y)
+      {  if     (bag[0]=="Empty")
+            bag[0]=item[z][n].name;
+         else if(bag[1]=="Empty")
+            bag[1]=item[z][n].name;
+         else if(bag[2]=="Empty")
+            bag[2]=item[z][n].name;
+         else
+            smsg(x,y,"your bag is full you cannot pick up this item");
+         smsg(x,y,item[z][n].hit);
+      } 
+   }
+}
+void menu()
+{
+   int n=1;
+   while(n==1)
+   {char sel=smsg(x,y,"\n"\
+    "\n   1) Help,\n"
+    "\n   2) Inventory,\n"
+    "\n   3) Exit.\n");
+    switch(sel)
+    {  case '1':
+         help(); break;
+       case '2':
+         smsg(x,y,\
+         "+ - - - - - - - - - - - - - - - - - +"\
+         "|                                   |"\
+         "|  The Tablet of Upcoming Features  |"\
+         "|            (T.U.F)                |"\
+         "|  Like Unswers, Chuckles and Kicks |"\
+         "|           (L.U.C.K)               |"\
+         "|                                   |"\
+         "|  1) a list of upcoming features.  |"\
+         "+ - - - - - - - - - - - - - - - - - +");
+         WINDOW *my_win;
+         my_win=newwin(19,37,(scrh-19)/2,(scrw-38)/2);
+         wprintw(my_win,
+         "   1) %s\n"
+         "   2) %s\n"
+         "   3) %s\n",
+         bag[0],bag[1],bag[2]);
+         wrefresh(my_win);
+         getch(); break;
+       case '3':
+         n=0; break;
+       default :
+         smsg(x,y,\
+         "Please type the number of your desired option.");
+         break;
+    }
+   }
+}
+void help()
+{
+   smsg(x,y,helpmsg);
 }
 void lvr(lx,ly,n)
 {
@@ -384,4 +571,9 @@ void flip(int n)
    else
      {sw[n]=2;}
 }
-
+void rev(int n)
+{  if(lever[z][n].on)
+      lever[z][n].on=0;
+   else
+      lever[z][n].on=2;
+}
